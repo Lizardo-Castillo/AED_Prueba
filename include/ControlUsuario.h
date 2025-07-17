@@ -1,0 +1,1 @@
+// Entrada del usuario (clics y teclado)

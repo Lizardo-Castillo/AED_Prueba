@@ -1,0 +1,1 @@
+// Array dinámico propio (sin STL)
