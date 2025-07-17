@@ -1,0 +1,1 @@
+// para Dijkstra / A* (No entiendo xd)
