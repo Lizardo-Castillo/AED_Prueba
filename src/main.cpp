@@ -37,6 +37,13 @@ Grafo grafo;
 bool modoTest = false;
 bool interfazGrafica = true;
 
+// Variables para la interfaz gráfica interactiva
+Nodo* nodoInicial = nullptr;     // Nodo A (origen)
+Nodo* nodoDestino = nullptr;     // Nodo B (destino)
+ResultadoBusqueda ultimaRuta;    // Resultado de la última búsqueda
+bool hayRuta = false;            // Si hay una ruta calculada
+int algoritmoSeleccionado = 1;   // 1=BFS, 2=DFS, 3=Dijkstra, 4=A*, 5=Best First
+
 // Prototipos de funciones
 void mostrarMenu();
 void probarGrafo();
@@ -55,6 +62,13 @@ void display();
 void reshape(int w, int h);
 void mouse(int button, int state, int x, int y);
 void keyboard(unsigned char key, int x, int y);
+
+// Funciones auxiliares para la interfaz gráfica
+Nodo* encontrarNodoEnPosicion(int x, int y);
+void ejecutarAlgoritmoSeleccionado();
+void dibujarRuta();
+void dibujarTextoInformacion();
+void mostrarAyudaInteractiva();
 
 int main(int argc, char** argv) {
     cout << "=== PROYECTO AED - ALGORITMOS Y ESTRUCTURAS DE DATOS ===" << endl;
@@ -498,22 +512,9 @@ void display() {
     float minX = -71.65f, maxX = -71.42f;  // Rango aproximado de nuestras coordenadas X
     float minY = -16.54f, maxY = -16.31f;  // Rango aproximado de nuestras coordenadas Y
     
-    // Dibujar nodos
-    glColor3f(1.0f, 0.0f, 0.0f);  // Rojo para nodos
-    glBegin(GL_POINTS);
-    for (int i = 0; i < grafo.getNumNodos(); i++) {
-        Nodo* nodo = grafo.obtenerNodoPorIndice(i);
-        if (nodo) {
-            // Normalizar coordenadas para la ventana (0-800 para X, 0-600 para Y)
-            float x = ((nodo->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;  // Margen de 25px
-            float y = ((nodo->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;  // Margen de 25px
-            glVertex2f(x, y);
-        }
-    }
-    glEnd();
-    
-    // Dibujar conexiones
-    glColor3f(0.0f, 1.0f, 0.0f);  // Verde para conexiones
+    // Dibujar conexiones primero (para que queden atrás)
+    glColor3f(0.3f, 0.3f, 0.3f);  // Gris para conexiones normales
+    glLineWidth(1.0f);
     glBegin(GL_LINES);
     for (int i = 0; i < grafo.getNumNodos(); i++) {
         Nodo* nodo = grafo.obtenerNodoPorIndice(i);
@@ -536,6 +537,50 @@ void display() {
     }
     glEnd();
     
+    // Dibujar la ruta encontrada en azul
+    if (hayRuta && ultimaRuta.rutaEncontrada) {
+        dibujarRuta();
+    }
+    
+    // Dibujar nodos normales
+    glPointSize(8.0f);
+    glColor3f(0.8f, 0.8f, 0.8f);  // Gris claro para nodos normales
+    glBegin(GL_POINTS);
+    for (int i = 0; i < grafo.getNumNodos(); i++) {
+        Nodo* nodo = grafo.obtenerNodoPorIndice(i);
+        if (nodo && nodo != nodoInicial && nodo != nodoDestino) {
+            float x = ((nodo->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
+            float y = ((nodo->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+            glVertex2f(x, y);
+        }
+    }
+    glEnd();
+    
+    // Dibujar nodo inicial (verde grande)
+    if (nodoInicial) {
+        glPointSize(15.0f);
+        glColor3f(0.0f, 1.0f, 0.0f);  // Verde para nodo inicial
+        glBegin(GL_POINTS);
+        float x = ((nodoInicial->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
+        float y = ((nodoInicial->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+        glVertex2f(x, y);
+        glEnd();
+    }
+    
+    // Dibujar nodo destino (rojo grande)
+    if (nodoDestino) {
+        glPointSize(15.0f);
+        glColor3f(1.0f, 0.0f, 0.0f);  // Rojo para nodo destino
+        glBegin(GL_POINTS);
+        float x = ((nodoDestino->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
+        float y = ((nodoDestino->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+        glVertex2f(x, y);
+        glEnd();
+    }
+    
+    // Mostrar información en pantalla
+    dibujarTextoInformacion();
+    
     glutSwapBuffers();
 }
 
@@ -548,34 +593,38 @@ void reshape(int w, int h) {
 }
 
 void mouse(int button, int state, int x, int y) {
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-        cout << "Click en posición: (" << x << ", " << y << ")" << endl;
+    if (state == GLUT_DOWN) {
+        Nodo* nodoSeleccionado = encontrarNodoEnPosicion(x, y);
         
-        // Buscar nodo más cercano al click
-        float minDist = 1e9;
-        Nodo* nodoMasCercano = nullptr;
-        
-        // Límites de coordenadas para normalización
-        float minX = -71.65f, maxX = -71.42f;
-        float minY = -16.54f, maxY = -16.31f;
-        
-        for (int i = 0; i < grafo.getNumNodos(); i++) {
-            Nodo* nodo = grafo.obtenerNodoPorIndice(i);
-            if (nodo) {
-                float nx = ((nodo->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
-                float ny = ((nodo->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
-                float dist = sqrt((x - nx) * (x - nx) + (y - ny) * (y - ny));
+        if (nodoSeleccionado) {
+            if (button == GLUT_LEFT_BUTTON) {
+                // Click izquierdo: seleccionar nodo inicial (A)
+                nodoInicial = nodoSeleccionado;
+                hayRuta = false;  // Limpiar ruta anterior
+                cout << "🟢 Nodo INICIAL seleccionado: " << nodoSeleccionado->getNombre() 
+                     << " (ID: " << nodoSeleccionado->getId() << ")" << endl;
                 
-                if (dist < minDist) {
-                    minDist = dist;
-                    nodoMasCercano = nodo;
+                // Si ya hay nodo destino, ejecutar búsqueda automáticamente
+                if (nodoDestino && nodoInicial != nodoDestino) {
+                    ejecutarAlgoritmoSeleccionado();
+                }
+                
+            } else if (button == GLUT_RIGHT_BUTTON) {
+                // Click derecho: seleccionar nodo destino (B)
+                nodoDestino = nodoSeleccionado;
+                hayRuta = false;  // Limpiar ruta anterior
+                cout << "🔴 Nodo DESTINO seleccionado: " << nodoSeleccionado->getNombre() 
+                     << " (ID: " << nodoSeleccionado->getId() << ")" << endl;
+                
+                // Si ya hay nodo inicial, ejecutar búsqueda automáticamente
+                if (nodoInicial && nodoInicial != nodoDestino) {
+                    ejecutarAlgoritmoSeleccionado();
                 }
             }
-        }
-        
-        if (nodoMasCercano && minDist < 30.0f) {  // Área de selección más grande
-            cout << "Nodo seleccionado: " << nodoMasCercano->getNombre() << endl;
-            cout << "Coordenadas: (" << nodoMasCercano->getX() << ", " << nodoMasCercano->getY() << ")" << endl;
+            
+            glutPostRedisplay();  // Redibujar pantalla
+        } else {
+            cout << "Click en posición vacía: (" << x << ", " << y << ")" << endl;
         }
     }
 }
@@ -586,23 +635,70 @@ void keyboard(unsigned char key, int x, int y) {
             cout << "Saliendo de la aplicación..." << endl;
             exit(0);
             break;
+            
         case 'h':
         case 'H':
-            cout << "\n=== AYUDA ===" << endl;
-            cout << "ESC - Salir" << endl;
-            cout << "H - Mostrar ayuda" << endl;
-            cout << "G - Mostrar información del grafo" << endl;
-            cout << "T - Ejecutar triangulación" << endl;
-            cout << "Click izquierdo - Seleccionar nodo" << endl;
+            mostrarAyudaInteractiva();
             break;
+            
+        case '1':  // BFS
+            algoritmoSeleccionado = 1;
+            cout << "🔍 Algoritmo seleccionado: BFS" << endl;
+            if (nodoInicial && nodoDestino && nodoInicial != nodoDestino) {
+                ejecutarAlgoritmoSeleccionado();
+            }
+            break;
+            
+        case '2':  // DFS
+            algoritmoSeleccionado = 2;
+            cout << "🔍 Algoritmo seleccionado: DFS" << endl;
+            if (nodoInicial && nodoDestino && nodoInicial != nodoDestino) {
+                ejecutarAlgoritmoSeleccionado();
+            }
+            break;
+            
+        case '3':  // Dijkstra
+            algoritmoSeleccionado = 3;
+            cout << "🔍 Algoritmo seleccionado: Dijkstra" << endl;
+            if (nodoInicial && nodoDestino && nodoInicial != nodoDestino) {
+                ejecutarAlgoritmoSeleccionado();
+            }
+            break;
+            
+        case '4':  // A*
+            algoritmoSeleccionado = 4;
+            cout << "🔍 Algoritmo seleccionado: A*" << endl;
+            if (nodoInicial && nodoDestino && nodoInicial != nodoDestino) {
+                ejecutarAlgoritmoSeleccionado();
+            }
+            break;
+            
+        case '5':  // Best First
+            algoritmoSeleccionado = 5;
+            cout << "🔍 Algoritmo seleccionado: Best First Search" << endl;
+            if (nodoInicial && nodoDestino && nodoInicial != nodoDestino) {
+                ejecutarAlgoritmoSeleccionado();
+            }
+            break;
+            
+        case 'r':
+        case 'R':  // Reset selección
+            nodoInicial = nullptr;
+            nodoDestino = nullptr;
+            hayRuta = false;
+            cout << "🔄 Selección reiniciada" << endl;
+            break;
+            
         case 'g':
         case 'G':
             probarGrafo();
             break;
+            
         case 't':
         case 'T':
             probarTriangulacion();
             break;
+            
         default:
             break;
     }
@@ -638,6 +734,153 @@ void probarBusquedaPorNombre() {
     }
     
     cout << "\n📝 Funcionalidad de búsqueda por nombre implementada correctamente." << endl;
+}
+
+// ========== FUNCIONES AUXILIARES PARA INTERFAZ GRÁFICA ==========
+
+Nodo* encontrarNodoEnPosicion(int x, int y) {
+    float minDist = 1e9;
+    Nodo* nodoMasCercano = nullptr;
+    
+    // Límites de coordenadas para normalización
+    float minX = -71.65f, maxX = -71.42f;
+    float minY = -16.54f, maxY = -16.31f;
+    
+    for (int i = 0; i < grafo.getNumNodos(); i++) {
+        Nodo* nodo = grafo.obtenerNodoPorIndice(i);
+        if (nodo) {
+            float nx = ((nodo->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
+            float ny = ((nodo->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+            float dist = sqrt((x - nx) * (x - nx) + (y - ny) * (y - ny));
+            
+            if (dist < minDist) {
+                minDist = dist;
+                nodoMasCercano = nodo;
+            }
+        }
+    }
+    
+    // Solo devolver el nodo si está lo suficientemente cerca
+    if (nodoMasCercano && minDist < 30.0f) {
+        return nodoMasCercano;
+    }
+    return nullptr;
+}
+
+void ejecutarAlgoritmoSeleccionado() {
+    if (!nodoInicial || !nodoDestino || nodoInicial == nodoDestino) {
+        return;
+    }
+    
+    const char* nombreAlgoritmo = "";
+    
+    switch (algoritmoSeleccionado) {
+        case 1:
+            nombreAlgoritmo = "BFS";
+            ultimaRuta = Algoritmos::BFS(grafo, nodoInicial->getId(), nodoDestino->getId());
+            break;
+        case 2:
+            nombreAlgoritmo = "DFS";
+            ultimaRuta = Algoritmos::DFS(grafo, nodoInicial->getId(), nodoDestino->getId());
+            break;
+        case 3:
+            nombreAlgoritmo = "Dijkstra";
+            ultimaRuta = Algoritmos::Dijkstra(grafo, nodoInicial->getId(), nodoDestino->getId());
+            break;
+        case 4:
+            nombreAlgoritmo = "A*";
+            ultimaRuta = Algoritmos::AStar(grafo, nodoInicial->getId(), nodoDestino->getId());
+            break;
+        case 5:
+            nombreAlgoritmo = "Best First Search";
+            ultimaRuta = Algoritmos::BestFirstSearch(grafo, nodoInicial->getId(), nodoDestino->getId());
+            break;
+    }
+    
+    hayRuta = ultimaRuta.rutaEncontrada;
+    
+    if (hayRuta) {
+        cout << "✅ " << nombreAlgoritmo << " encontró ruta de " 
+             << nodoInicial->getNombre() << " a " << nodoDestino->getNombre() << endl;
+        cout << "   📏 Longitud: " << ultimaRuta.ruta.size() << " nodos" << endl;
+        cout << "   ⏱️  Tiempo: " << ultimaRuta.metricas.tiempoEjecucion << " ms" << endl;
+        cout << "   📐 Distancia: " << ultimaRuta.metricas.distanciaTotal << " unidades" << endl;
+    } else {
+        cout << "❌ " << nombreAlgoritmo << " no encontró ruta entre los nodos seleccionados" << endl;
+    }
+    
+    glutPostRedisplay();
+}
+
+void dibujarRuta() {
+    if (!hayRuta || ultimaRuta.ruta.size() < 2) return;
+    
+    float minX = -71.65f, maxX = -71.42f;
+    float minY = -16.54f, maxY = -16.31f;
+    
+    // Dibujar líneas de la ruta en azul grueso
+    glColor3f(0.0f, 0.4f, 1.0f);  // Azul para la ruta
+    glLineWidth(4.0f);
+    glBegin(GL_LINES);
+    
+    for (int i = 0; i < ultimaRuta.ruta.size() - 1; i++) {
+        Nodo* nodo1 = grafo.obtenerNodoPorId(ultimaRuta.ruta[i]);
+        Nodo* nodo2 = grafo.obtenerNodoPorId(ultimaRuta.ruta[i + 1]);
+        
+        if (nodo1 && nodo2) {
+            float x1 = ((nodo1->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
+            float y1 = ((nodo1->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+            float x2 = ((nodo2->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
+            float y2 = ((nodo2->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+            
+            glVertex2f(x1, y1);
+            glVertex2f(x2, y2);
+        }
+    }
+    glEnd();
+    
+    // Dibujar nodos intermedios de la ruta en azul
+    glPointSize(10.0f);
+    glColor3f(0.0f, 0.6f, 1.0f);  // Azul claro para nodos de la ruta
+    glBegin(GL_POINTS);
+    for (int i = 1; i < ultimaRuta.ruta.size() - 1; i++) {  // Excluir inicial y final
+        Nodo* nodo = grafo.obtenerNodoPorId(ultimaRuta.ruta[i]);
+        if (nodo) {
+            float x = ((nodo->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
+            float y = ((nodo->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+            glVertex2f(x, y);
+        }
+    }
+    glEnd();
+}
+
+void dibujarTextoInformacion() {
+    // Esta función podría implementar texto en pantalla si se tiene una librería de texto
+    // Por ahora, la información se muestra en consola
+}
+
+void mostrarAyudaInteractiva() {
+    cout << "\n🎮 === INTERFAZ GRÁFICA INTERACTIVA ===" << endl;
+    cout << "🖱️  CONTROLES DE RATÓN:" << endl;
+    cout << "   🟢 Click IZQUIERDO  - Seleccionar nodo INICIAL (A)" << endl;
+    cout << "   🔴 Click DERECHO    - Seleccionar nodo DESTINO (B)" << endl;
+    cout << "\n⌨️  CONTROLES DE TECLADO:" << endl;
+    cout << "   1 - Algoritmo BFS" << endl;
+    cout << "   2 - Algoritmo DFS" << endl;
+    cout << "   3 - Algoritmo Dijkstra" << endl;
+    cout << "   4 - Algoritmo A*" << endl;
+    cout << "   5 - Algoritmo Best First Search" << endl;
+    cout << "   R - Reiniciar selección" << endl;
+    cout << "   H - Mostrar esta ayuda" << endl;
+    cout << "   G - Información del grafo" << endl;
+    cout << "   T - Ejecutar triangulación" << endl;
+    cout << "   ESC - Salir" << endl;
+    cout << "\n🎯 CÓMO USAR:" << endl;
+    cout << "1. Click izquierdo en un nodo para seleccionar ORIGEN (verde)" << endl;
+    cout << "2. Click derecho en otro nodo para seleccionar DESTINO (rojo)" << endl;
+    cout << "3. Presiona 1-5 para elegir algoritmo de búsqueda" << endl;
+    cout << "4. ¡La ruta aparece en AZUL automáticamente!" << endl;
+    cout << "===========================================" << endl;
 }
 
 // NUEVA FUNCIÓN: Probar Parte II (capacidades para mapas grandes)
