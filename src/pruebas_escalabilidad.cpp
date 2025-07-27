@@ -1,10 +1,13 @@
 #include <iostream>
 #include <chrono>
 #include <fstream>
+#include <functional>
+#include <string>
 #include "Grafo.h"
 #include "Algoritmos.h"
 #include "GeneradorDatos.h"
 #include "Metricas.h"
+#include "lector_csv.h"
 
 /**
  * Programa para pruebas de escalabilidad - Parte II del proyecto
@@ -13,14 +16,12 @@
 class PruebasEscalabilidad {
 private:
     Grafo* grafo;
-    Algoritmos* algoritmos;
     
 public:
-    PruebasEscalabilidad() : grafo(nullptr), algoritmos(nullptr) {}
+    PruebasEscalabilidad() : grafo(nullptr) {}
     
     ~PruebasEscalabilidad() {
         delete grafo;
-        delete algoritmos;
     }
     
     void ejecutarPruebasCompletas() {
@@ -51,8 +52,15 @@ private:
         
         // Cargar y construir grafo
         grafo = new Grafo();
-        grafo->cargarDesdeCSV("data/malla_10k.csv");
-        grafo->conectarNodosAutomaticamente(5.0); // Radio de conexión
+        if (!leerCSV("data/malla_10k.csv", *grafo)) {
+            std::cout << "❌ Error cargando archivo CSV. Usando datos de prueba..." << std::endl;
+            // Agregar algunos nodos de prueba
+            for (int i = 1; i <= 100; i++) {
+                std::string nombre = "Nodo_" + std::to_string(i);
+                grafo->agregarNodo(i, nombre.c_str(), i * 0.1f, i * 0.1f);
+            }
+        }
+        grafo->conectarAutomaticamente(); // Usar método disponible
         
         auto finConstruccion = std::chrono::high_resolution_clock::now();
         auto tiempoConstruccion = std::chrono::duration_cast<std::chrono::milliseconds>(finConstruccion - inicio).count();
@@ -60,14 +68,11 @@ private:
         std::cout << "⏱️  Tiempo de construcción del grafo: " << tiempoConstruccion << " ms" << std::endl;
         std::cout << "📊 Nodos: " << grafo->getNumNodos() << std::endl;
         
-        // Ejecutar algoritmos
-        algoritmos = new Algoritmos(grafo);
+        // Ejecutar algoritmos usando métodos estáticos
         ejecutarPruebassAlgoritmos(1, grafo->getNumNodos() / 2);
         
         delete grafo;
-        delete algoritmos;
         grafo = nullptr;
-        algoritmos = nullptr;
     }
     
     void pruebasMedianas() {
@@ -79,8 +84,15 @@ private:
         auto inicio = std::chrono::high_resolution_clock::now();
         
         grafo = new Grafo();
-        grafo->cargarDesdeCSV("data/distribucion_50k.csv");
-        grafo->conectarNodosAutomaticamente(3.0);
+        if (!leerCSV("data/distribucion_50k.csv", *grafo)) {
+            std::cout << "❌ Error cargando archivo CSV. Usando datos de prueba..." << std::endl;
+            // Agregar nodos de prueba
+            for (int i = 1; i <= 1000; i++) {
+                std::string nombre = "Nodo_" + std::to_string(i);
+                grafo->agregarNodo(i, nombre.c_str(), i * 0.05f, i * 0.05f);
+            }
+        }
+        grafo->conectarAutomaticamente();
         
         auto finConstruccion = std::chrono::high_resolution_clock::now();
         auto tiempoConstruccion = std::chrono::duration_cast<std::chrono::milliseconds>(finConstruccion - inicio).count();
@@ -88,13 +100,10 @@ private:
         std::cout << "⏱️  Tiempo de construcción: " << tiempoConstruccion << " ms" << std::endl;
         std::cout << "📊 Nodos: " << grafo->getNumNodos() << std::endl;
         
-        algoritmos = new Algoritmos(grafo);
-        ejecutarPruebassAlgoritmos(1, 25000);
+        ejecutarPruebassAlgoritmos(1, 500);
         
         delete grafo;
-        delete algoritmos;
         grafo = nullptr;
-        algoritmos = nullptr;
     }
     
     void pruebasGrandes() {
@@ -116,10 +125,17 @@ private:
         auto inicio = std::chrono::high_resolution_clock::now();
         
         grafo = new Grafo();
-        grafo->cargarDesdeCSV("data/mapa_500k.csv");
+        if (!leerCSV("data/mapa_500k.csv", *grafo)) {
+            std::cout << "❌ Error cargando archivo CSV. Usando datos de prueba extendidos..." << std::endl;
+            // Agregar más nodos de prueba para simular gran escala
+            for (int i = 1; i <= 5000; i++) {
+                std::string nombre = "Nodo_" + std::to_string(i);
+                grafo->agregarNodo(i, nombre.c_str(), i * 0.01f, i * 0.01f);
+            }
+        }
         
-        // Conexión más selectiva para grafos grandes
-        grafo->conectarNodosAutomaticamente(2.0);
+        // Conexión automática
+        grafo->conectarAutomaticamente();
         
         auto finConstruccion = std::chrono::high_resolution_clock::now();
         auto tiempoConstruccion = std::chrono::duration_cast<std::chrono::seconds>(finConstruccion - inicio).count();
@@ -127,39 +143,39 @@ private:
         std::cout << "⏱️  Tiempo de construcción: " << tiempoConstruccion << " segundos" << std::endl;
         std::cout << "📊 Nodos: " << grafo->getNumNodos() << std::endl;
         
-        algoritmos = new Algoritmos(grafo);
-        ejecutarPruebassAlgoritmos(1, 250000);
+        ejecutarPruebassAlgoritmos(1, grafo->getNumNodos() / 10);
         
         delete grafo;
-        delete algoritmos;
         grafo = nullptr;
-        algoritmos = nullptr;
     }
     
     void ejecutarPruebassAlgoritmos(int nodoInicio, int nodoFin) {
         std::cout << "\n🔬 Ejecutando algoritmos desde nodo " << nodoInicio << " hasta " << nodoFin << std::endl;
         
-        // Medir cada algoritmo
-        auto medirAlgoritmo = [&](const std::string& nombre, auto funcion) {
+        // Función para medir tiempo de ejecución
+        auto medirTiempo = [](const std::string& nombre, std::function<ResultadoBusqueda()> funcion) {
             auto inicio = std::chrono::high_resolution_clock::now();
-            auto resultado = funcion();
+            ResultadoBusqueda resultado = funcion();
             auto fin = std::chrono::high_resolution_clock::now();
             
             auto tiempo = std::chrono::duration_cast<std::chrono::milliseconds>(fin - inicio).count();
             
             std::cout << "📈 " << nombre << ":" << std::endl;
             std::cout << "   ⏱️  Tiempo: " << tiempo << " ms" << std::endl;
-            std::cout << "   🔍 Nodos visitados: " << resultado.metricas.nodosVisitados << std::endl;
-            std::cout << "   📏 Longitud ruta: " << resultado.metricas.longitudRuta << std::endl;
-            std::cout << "   💾 Memoria estimada: " << resultado.metricas.memoriaUsada << " bytes" << std::endl;
+            std::cout << "   ✅ Ruta encontrada: " << (resultado.rutaEncontrada ? "Sí" : "No") << std::endl;
+            if (resultado.rutaEncontrada) {
+                std::cout << "   🔍 Nodos visitados: " << resultado.metricas.nodosVisitados << std::endl;
+                std::cout << "   📏 Longitud ruta: " << resultado.metricas.longitudRuta << std::endl;
+                std::cout << "   💾 Memoria estimada: " << resultado.metricas.memoriaUsada << " bytes" << std::endl;
+            }
         };
         
         try {
-            medirAlgoritmo("BFS", [&]() { return algoritmos->BFS(nodoInicio, nodoFin); });
-            medirAlgoritmo("DFS", [&]() { return algoritmos->DFS(nodoInicio, nodoFin); });
-            medirAlgoritmo("Dijkstra", [&]() { return algoritmos->dijkstra(nodoInicio, nodoFin); });
-            medirAlgoritmo("A*", [&]() { return algoritmos->aStar(nodoInicio, nodoFin); });
-            medirAlgoritmo("Best First", [&]() { return algoritmos->bestFirst(nodoInicio, nodoFin); });
+            medirTiempo("BFS", [&]() { return Algoritmos::BFS(*grafo, nodoInicio, nodoFin); });
+            medirTiempo("DFS", [&]() { return Algoritmos::DFS(*grafo, nodoInicio, nodoFin); });
+            medirTiempo("Dijkstra", [&]() { return Algoritmos::Dijkstra(*grafo, nodoInicio, nodoFin); });
+            medirTiempo("A*", [&]() { return Algoritmos::AStar(*grafo, nodoInicio, nodoFin); });
+            medirTiempo("Best First", [&]() { return Algoritmos::BestFirstSearch(*grafo, nodoInicio, nodoFin); });
         } catch (const std::exception& e) {
             std::cout << "❌ Error durante la ejecución: " << e.what() << std::endl;
         }
