@@ -25,12 +25,17 @@ public:
 
     int getId();
     const char* getNombre();
-    float getX();
-    float getY();
+    float getX() const;
+    float getY() const;
     Vecino* getVecinos();
 
     void agregarVecino(int idVecino, float distancia);
     void imprimirVecinos();
+    
+    // Métodos adicionales para algoritmos
+    int getNumVecinos();
+    int getVecinoId(int indice);
+    float getDistanciaVecino(int indice);
 };
 
 #endif

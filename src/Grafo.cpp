@@ -1,5 +1,6 @@
 #include "Grafo.h"
 #include <iostream>
+#include <cstring>  // Para strcmp
 #include <cmath>
 #include <cstring>
 
@@ -25,6 +26,16 @@ Nodo* Grafo::obtenerNodoPorId(int id) {
     for (int i = 0; i < numNodos; ++i)
         if (nodos[i]->getId() == id)
             return nodos[i];
+    return nullptr;
+}
+
+// NUEVO: Implementación de búsqueda por nombre
+Nodo* Grafo::obtenerNodoPorNombre(const char* nombre) {
+    for (int i = 0; i < numNodos; ++i) {
+        if (strcmp(nodos[i]->getNombre(), nombre) == 0) {
+            return nodos[i];
+        }
+    }
     return nullptr;
 }
 
@@ -83,4 +94,24 @@ void Grafo::imprimirGrafo() {
         nodo->imprimirVecinos();
         std::cout << "---------------------------\n";
     }
+}
+
+// Implementaciones para algoritmos de búsqueda
+int Grafo::obtenerNumeroNodos() const {
+    return numNodos;
+}
+
+Nodo* Grafo::buscarNodoPorId(int id) {
+    return obtenerNodoPorId(id);
+}
+
+double Grafo::obtenerDistancia(int nodoA, int nodoB) {
+    Nodo* a = obtenerNodoPorId(nodoA);
+    Nodo* b = obtenerNodoPorId(nodoB);
+    
+    if (a != nullptr && b != nullptr) {
+        return distanciaEuclidea(a, b);
+    }
+    
+    return 0.0;
 }

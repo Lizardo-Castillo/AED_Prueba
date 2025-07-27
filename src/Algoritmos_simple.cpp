@@ -1,6 +1,7 @@
 #include "Algoritmos.h"
 #include "Grafo.h"
 #include "Metricas.h"
+#include "Array.h"
 #include <iostream>
 #include <cmath>
 
@@ -107,7 +108,7 @@ namespace Algoritmos {
     }
     
     // Función auxiliar para reconstruir ruta
-    RutaSimple reconstruirRuta(int inicio, int fin) {
+    RutaSimple reconstruirRuta(const Array<int>& padre, int inicio, int fin) {
         RutaSimple ruta;
         ruta.agregar(inicio);
         ruta.agregar(fin);
@@ -164,9 +165,8 @@ namespace Algoritmos {
                   << "\t\t" << resultadoBestFirst.metricas.nodosVisitados 
                   << "\t" << resultadoBestFirst.metricas.distanciaTotal << std::endl;
         
-        std::cout << "\n🏆 NOTA: Implementaciones básicas para demostración del framework." << std::endl;
-        std::cout << "📝 Cumple con las indicaciones: sin STL, métricas incluidas." << std::endl;
-        std::cout << "🔧 Para implementación completa, expandir las estructuras de datos." << std::endl;
+        std::cout << "\n🏆 NOTA: Implementaciones básicas para demostración." << std::endl;
+        std::cout << "Para implementación completa, ver código fuente." << std::endl;
         std::cout << "=======================================\n" << std::endl;
     }
 }

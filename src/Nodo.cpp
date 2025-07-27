@@ -29,8 +29,8 @@ Nodo::~Nodo() {
 
 int Nodo::getId() { return id; }
 const char* Nodo::getNombre() { return nombre; }
-float Nodo::getX() { return x; }
-float Nodo::getY() { return y; }
+float Nodo::getX() const { return x; }
+float Nodo::getY() const { return y; }
 Vecino* Nodo::getVecinos() { return vecinos; }
 
 void Nodo::agregarVecino(int idVecino, float distancia) {
@@ -47,4 +47,35 @@ void Nodo::imprimirVecinos() {
         std::cout << "  -> Vecino ID: " << actual->id << " (distancia: " << actual->distancia << ")\n";
         actual = actual->siguiente;
     }
+}
+
+// Métodos adicionales para algoritmos
+int Nodo::getNumVecinos() {
+    int count = 0;
+    Vecino* actual = vecinos;
+    while (actual) {
+        count++;
+        actual = actual->siguiente;
+    }
+    return count;
+}
+
+int Nodo::getVecinoId(int indice) {
+    int count = 0;
+    Vecino* actual = vecinos;
+    while (actual && count < indice) {
+        actual = actual->siguiente;
+        count++;
+    }
+    return (actual) ? actual->id : -1;
+}
+
+float Nodo::getDistanciaVecino(int indice) {
+    int count = 0;
+    Vecino* actual = vecinos;
+    while (actual && count < indice) {
+        actual = actual->siguiente;
+        count++;
+    }
+    return (actual) ? actual->distancia : 0.0f;
 }
