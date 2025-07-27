@@ -1,6 +1,6 @@
 # 📍 Proyecto AED - Sistema de Navegación con Grafos
 
-**Estudiante:** Lizardo Castillo  
+**Estudiantes:** Lizardo Castillo, Karla Cornejo, Jose Huaynasi, Anderson Carpio
 **Proyecto:** AED Navigation System - Arequipa Route Finder  
 **Estado:** ✅ **COMPLETAMENTE FUNCIONAL** con algoritmos reales e interfaz interactiva
 
