@@ -1,6 +1,14 @@
 # 📍 Proyecto AED - Sistema de Navegación con Grafos
 
-**Estudiantes:** Lizardo Castillo, Karla Cornejo, Jose Huaynasi, Anderson Carpio
+## 👥 **EQUIPO DE DESARROLLO**
+
+| Estudiante | CUI | GitHub |
+|------------|-----|--------|
+| **Lizardo Castillo** | [CUI] | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Lizardo-Castillo) |
+| **Karla Veronica** | [CUI] | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](#) |
+| **Jose Huaynasi** | [CUI] | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](#) |
+| **Anderson Carpio** | [CUI] | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](#) |
+
 **Proyecto:** AED Navigation System - Arequipa Route Finder  
 **Estado:** ✅ **COMPLETAMENTE FUNCIONAL** con algoritmos reales e interfaz interactiva
 
@@ -465,10 +473,24 @@ El proyecto cumple con **TODAS** las especificaciones del archivo `INDICACIONES.
 
 ## 👥 Información del Equipo
 
+### **Estudiantes:**
+| Estudiante | CUI | Rol en el Proyecto |
+|------------|-----|-------------------|
+| **Lizardo Castillo** | [CUI] | Arquitectura principal, algoritmos, interfaz |
+| **Karla Veronica** | [CUI] | Estructuras de datos, testing |
+| **Jose Huaynasi** | [CUI] | Visualización, métricas |
+| **Anderson Carpio** | [CUI] | Documentación, escalabilidad |
+
 **Curso**: Algoritmos y Estructuras de Datos  
 **Institución**: [Universidad/Instituto]  
 **Fecha de Entrega**: 31 de Julio, 2025  
 **Repositorio**: https://github.com/Lizardo-Castillo/AED_Proyecto
+
+### **Contribuciones del Equipo:**
+- **Desarrollo colaborativo**: Implementación modular con responsabilidades distribuidas
+- **Testing conjunto**: Validación cruzada de algoritmos y estructuras
+- **Documentación completa**: README técnico y manuales de usuario
+- **Cumplimiento de especificaciones**: 100% de los requisitos implementados
 
 ---
 
