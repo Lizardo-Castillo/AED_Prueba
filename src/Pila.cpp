@@ -3,7 +3,7 @@
 // Implementaciones de métodos de la plantilla Pila
 
 template<typename T>
-Pila<T>::Pila() : tope(nullptr), size_(0s) {}
+Pila<T>::Pila() : tope(nullptr), size_(0) {}
 
 template<typename T>
 Pila<T>::~Pila() {
