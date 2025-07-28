@@ -145,6 +145,21 @@ int main(int argc, char** argv) {
             } else if (dataset == "malla" || dataset == "2") {
                 archivoCSV = "data/malla_10k.csv";
                 cout << "🌐 Dataset seleccionado: Malla 10K (10,000 nodos)" << endl;
+            } else if (dataset == "malla_20") {
+                archivoCSV = "data/malla_20.csv";
+                cout << "🔸 Dataset seleccionado: Malla 20 (20 nodos)" << endl;
+            } else if (dataset == "malla_100") {
+                archivoCSV = "data/malla_100.csv";
+                cout << "🔹 Dataset seleccionado: Malla 100 (100 nodos)" << endl;
+            } else if (dataset == "malla_400") {
+                archivoCSV = "data/malla_400.csv";
+                cout << "🔶 Dataset seleccionado: Malla 400 (400 nodos)" << endl;
+            } else if (dataset == "malla_1k") {
+                archivoCSV = "data/malla_1k.csv";
+                cout << "🔷 Dataset seleccionado: Malla 1K (1,000 nodos)" << endl;
+            } else if (dataset == "malla_5k") {
+                archivoCSV = "data/malla_5k.csv";
+                cout << "🔸 Dataset seleccionado: Malla 5K (5,000 nodos)" << endl;
             } else if (dataset == "distribucion" || dataset == "3") {
                 archivoCSV = "data/distribucion_50k.csv";
                 cout << "📈 Dataset seleccionado: Distribución 50K (50,000 nodos)" << endl;
@@ -161,6 +176,11 @@ int main(int argc, char** argv) {
             cout << "  --data <dataset>    Seleccionar dataset:" << endl;
             cout << "                        arequipa|1  = 20 nodos de Arequipa (defecto)" << endl;
             cout << "                        malla|2     = 10K nodos en malla regular" << endl;
+            cout << "                        malla_20    = 20 nodos en malla" << endl;
+            cout << "                        malla_100   = 100 nodos en malla" << endl;
+            cout << "                        malla_400   = 400 nodos en malla" << endl;
+            cout << "                        malla_1k    = 1K nodos en malla" << endl;
+            cout << "                        malla_5k    = 5K nodos en malla" << endl;
             cout << "                        distribucion|3 = 50K nodos distribuidos" << endl;
             cout << "  --help              Mostrar esta ayuda" << endl;
             cout << "\nEjemplos:" << endl;

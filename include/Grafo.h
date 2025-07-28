@@ -3,7 +3,7 @@
 
 #include "Nodo.h"
 
-#define MAX_NODOS 200
+#define MAX_NODOS 10000  // Aumentado para soportar datasets de escalabilidad
 
 // Estructura simple para conexiones (simplificada)
 struct ConexionSimple {
