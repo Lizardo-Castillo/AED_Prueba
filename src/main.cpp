@@ -36,6 +36,58 @@ using namespace std;
 // Variables globales
 Grafo grafo;
 bool modoTest = false;
+// Variables globales para los límites de coordenadas
+float globalMinX = 0.0f, globalMaxX = 0.0f;
+float globalMinY = 0.0f, globalMaxY = 0.0f;
+
+// Función para calcular los límites dinámicamente
+void calcularLimitesCoordinadas() {
+    globalMinX = 999999.0f; globalMaxX = -999999.0f;
+    globalMinY = 999999.0f; globalMaxY = -999999.0f;
+    
+    // Encontrar los límites reales de los datos
+    for (int i = 1; i <= grafo.getNumNodos(); i++) {
+        Nodo* nodo = grafo.obtenerNodoPorId(i);
+        if (nodo) {
+            float x = nodo->getX();
+            float y = nodo->getY();
+            
+            if (x < globalMinX) globalMinX = x;
+            if (x > globalMaxX) globalMaxX = x;
+            if (y < globalMinY) globalMinY = y;
+            if (y > globalMaxY) globalMaxY = y;
+        }
+    }
+    
+    // Agregar un pequeño margen para evitar que los nodos estén en los bordes
+    float margenX = (globalMaxX - globalMinX) * 0.1f;  // 10% de margen
+    float margenY = (globalMaxY - globalMinY) * 0.1f;
+    globalMinX -= margenX;
+    globalMaxX += margenX;
+    globalMinY -= margenY;
+    globalMaxY += margenY;
+    
+    // Verificar que tengamos un rango válido
+    if (globalMaxX - globalMinX < 0.001f) {
+        // Si todos los nodos tienen la misma coordenada X, usar un rango por defecto
+        float centro = globalMinX;
+        globalMinX = centro - 0.1f;
+        globalMaxX = centro + 0.1f;
+    }
+    if (globalMaxY - globalMinY < 0.001f) {
+        // Si todos los nodos tienen la misma coordenada Y, usar un rango por defecto
+        float centro = globalMinY;
+        globalMinY = centro - 0.1f;
+        globalMaxY = centro + 0.1f;
+    }
+}
+
+// Función para convertir coordenadas del mundo a coordenadas de pantalla
+void coordenadaAPixel(float worldX, float worldY, float& pixelX, float& pixelY) {
+    pixelX = ((worldX - globalMinX) / (globalMaxX - globalMinX)) * 750.0f + 25.0f;
+    pixelY = ((worldY - globalMinY) / (globalMaxY - globalMinY)) * 550.0f + 25.0f;
+}
+
 bool interfazGrafica = true;
 
 // Variables para la interfaz gráfica interactiva
@@ -536,9 +588,8 @@ void inicializarGLUT(int argc, char** argv) {
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
     
-    // Encontrar los límites de las coordenadas para normalización automática
-    float minX = -71.65f, maxX = -71.42f;  // Rango aproximado de nuestras coordenadas X
-    float minY = -16.54f, maxY = -16.31f;  // Rango aproximado de nuestras coordenadas Y
+    // Calcular los límites dinámicamente una vez por frame
+    calcularLimitesCoordinadas();
     
     // Dibujar conexiones primero (para que queden atrás)
     glColor3f(0.3f, 0.3f, 0.3f);  // Gris para conexiones normales
@@ -547,15 +598,15 @@ void display() {
     for (int i = 0; i < grafo.getNumNodos(); i++) {
         Nodo* nodo = grafo.obtenerNodoPorIndice(i);
         if (nodo) {
-            float x1 = ((nodo->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
-            float y1 = ((nodo->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+            float x1, y1;
+            coordenadaAPixel(nodo->getX(), nodo->getY(), x1, y1);
             
             Vecino* vecino = nodo->getVecinos();
             while (vecino) {
                 Nodo* nodoVecino = grafo.obtenerNodoPorId(vecino->id);
                 if (nodoVecino) {
-                    float x2 = ((nodoVecino->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
-                    float y2 = ((nodoVecino->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+                    float x2, y2;
+                    coordenadaAPixel(nodoVecino->getX(), nodoVecino->getY(), x2, y2);
                     glVertex2f(x1, y1);
                     glVertex2f(x2, y2);
                 }
@@ -577,8 +628,8 @@ void display() {
     for (int i = 0; i < grafo.getNumNodos(); i++) {
         Nodo* nodo = grafo.obtenerNodoPorIndice(i);
         if (nodo && nodo != nodoInicial && nodo != nodoDestino) {
-            float x = ((nodo->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
-            float y = ((nodo->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+            float x, y;
+            coordenadaAPixel(nodo->getX(), nodo->getY(), x, y);
             glVertex2f(x, y);
         }
     }
@@ -589,8 +640,8 @@ void display() {
         glPointSize(15.0f);
         glColor3f(0.0f, 1.0f, 0.0f);  // Verde para nodo inicial
         glBegin(GL_POINTS);
-        float x = ((nodoInicial->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
-        float y = ((nodoInicial->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+        float x, y;
+        coordenadaAPixel(nodoInicial->getX(), nodoInicial->getY(), x, y);
         glVertex2f(x, y);
         glEnd();
     }
@@ -600,8 +651,8 @@ void display() {
         glPointSize(15.0f);
         glColor3f(1.0f, 0.0f, 0.0f);  // Rojo para nodo destino
         glBegin(GL_POINTS);
-        float x = ((nodoDestino->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
-        float y = ((nodoDestino->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+        float x, y;
+        coordenadaAPixel(nodoDestino->getX(), nodoDestino->getY(), x, y);
         glVertex2f(x, y);
         glEnd();
     }
@@ -770,15 +821,14 @@ Nodo* encontrarNodoEnPosicion(int x, int y) {
     float minDist = 1e9;
     Nodo* nodoMasCercano = nullptr;
     
-    // Límites de coordenadas para normalización
-    float minX = -71.65f, maxX = -71.42f;
-    float minY = -16.54f, maxY = -16.31f;
+    // Usar los límites globales calculados
+    calcularLimitesCoordinadas();
     
     for (int i = 0; i < grafo.getNumNodos(); i++) {
         Nodo* nodo = grafo.obtenerNodoPorIndice(i);
         if (nodo) {
-            float nx = ((nodo->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
-            float ny = ((nodo->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+            float nx, ny;
+            coordenadaAPixel(nodo->getX(), nodo->getY(), nx, ny);
             float dist = sqrt((x - nx) * (x - nx) + (y - ny) * (y - ny));
             
             if (dist < minDist) {
@@ -843,9 +893,6 @@ void ejecutarAlgoritmoSeleccionado() {
 void dibujarRuta() {
     if (!hayRuta || ultimaRuta.ruta.size() < 2) return;
     
-    float minX = -71.65f, maxX = -71.42f;
-    float minY = -16.54f, maxY = -16.31f;
-    
     // Dibujar líneas de la ruta en azul grueso
     glColor3f(0.0f, 0.4f, 1.0f);  // Azul para la ruta
     glLineWidth(4.0f);
@@ -856,10 +903,9 @@ void dibujarRuta() {
         Nodo* nodo2 = grafo.obtenerNodoPorId(ultimaRuta.ruta[i + 1]);
         
         if (nodo1 && nodo2) {
-            float x1 = ((nodo1->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
-            float y1 = ((nodo1->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
-            float x2 = ((nodo2->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
-            float y2 = ((nodo2->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+            float x1, y1, x2, y2;
+            coordenadaAPixel(nodo1->getX(), nodo1->getY(), x1, y1);
+            coordenadaAPixel(nodo2->getX(), nodo2->getY(), x2, y2);
             
             glVertex2f(x1, y1);
             glVertex2f(x2, y2);
@@ -874,8 +920,8 @@ void dibujarRuta() {
     for (int i = 1; i < ultimaRuta.ruta.size() - 1; i++) {  // Excluir inicial y final
         Nodo* nodo = grafo.obtenerNodoPorId(ultimaRuta.ruta[i]);
         if (nodo) {
-            float x = ((nodo->getX() - minX) / (maxX - minX)) * 750.0f + 25.0f;
-            float y = ((nodo->getY() - minY) / (maxY - minY)) * 550.0f + 25.0f;
+            float x, y;
+            coordenadaAPixel(nodo->getX(), nodo->getY(), x, y);
             glVertex2f(x, y);
         }
     }

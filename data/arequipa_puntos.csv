@@ -2,10 +2,10 @@ id,nombre,x,y
 1,Plaza de Armas,-71.537,-16.398
 2,Monasterio Santa Catalina,-71.580,-16.380
 3,Mercado San Camilo,-71.520,-16.420
-4,Universidad San Agustin,-71.500,-16.370
+4,Universidad San Agustin,-71.200,-16.100
 5,Cerro Sachaca,-71.480,-16.350
 6,Yanahuara,-71.600,-16.390
-7,Cayma,-71.490,-16.330
+7,Cayma,-71.800,-16.600
 8,Paucarpata,-71.470,-16.450
 9,Cerrillos,-71.620,-16.430
 10,Mollebaya,-71.450,-16.480
@@ -16,6 +16,6 @@ id,nombre,x,y
 15,Alto Selva Alegre,-71.520,-16.320
 16,Miraflores,-71.560,-16.340
 17,Mariano Melgar,-71.440,-16.380
-18,José Luis Bustamante,-71.420,-16.400
-19,Hunter,-71.640,-16.360
+18,José Luis Bustamante,-70.000,-15.000
+19,Hunter,-72.000,-17.000
 20,Cerro Colorado,-71.610,-16.310
