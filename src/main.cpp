@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cmath>
+#include <string>
 #include <exception>
 
 // Incluir todos los headers del proyecto
@@ -74,6 +75,8 @@ int main(int argc, char** argv) {
     cout << "=== PROYECTO AED - ALGORITMOS Y ESTRUCTURAS DE DATOS ===" << endl;
     cout << "Grafos, Algoritmos de Búsqueda y Visualización" << endl;
     cout << "========================================================" << endl;
+    
+    string archivoCSV = "data/arequipa_puntos.csv"; // Por defecto
 
     // Verificar argumentos de línea de comandos
     for (int i = 1; i < argc; i++) {
@@ -82,20 +85,45 @@ int main(int argc, char** argv) {
             interfazGrafica = false;
         } else if (strcmp(argv[i], "--no-gui") == 0) {
             interfazGrafica = false;
+        } else if (strcmp(argv[i], "--data") == 0 && i + 1 < argc) {
+            string dataset = argv[i + 1];
+            if (dataset == "arequipa" || dataset == "1") {
+                archivoCSV = "data/arequipa_puntos.csv";
+                cout << "📍 Dataset seleccionado: Arequipa (20 nodos)" << endl;
+            } else if (dataset == "malla" || dataset == "2") {
+                archivoCSV = "data/malla_10k.csv";
+                cout << "🌐 Dataset seleccionado: Malla 10K (10,000 nodos)" << endl;
+            } else if (dataset == "distribucion" || dataset == "3") {
+                archivoCSV = "data/distribucion_50k.csv";
+                cout << "📈 Dataset seleccionado: Distribución 50K (50,000 nodos)" << endl;
+            } else {
+                cout << "⚠️ Dataset desconocido: " << dataset << endl;
+                cout << "Usando dataset por defecto: Arequipa" << endl;
+            }
+            i++; // Saltar el siguiente argumento
         } else if (strcmp(argv[i], "--help") == 0) {
             cout << "Uso: " << argv[0] << " [opciones]" << endl;
             cout << "Opciones:" << endl;
-            cout << "  --test      Ejecutar en modo test (sin interfaz gráfica)" << endl;
-            cout << "  --no-gui    Ejecutar sin interfaz gráfica" << endl;
-            cout << "  --help      Mostrar esta ayuda" << endl;
+            cout << "  --test              Ejecutar en modo test (sin interfaz gráfica)" << endl;
+            cout << "  --no-gui            Ejecutar sin interfaz gráfica" << endl;
+            cout << "  --data <dataset>    Seleccionar dataset:" << endl;
+            cout << "                        arequipa|1  = 20 nodos de Arequipa (defecto)" << endl;
+            cout << "                        malla|2     = 10K nodos en malla regular" << endl;
+            cout << "                        distribucion|3 = 50K nodos distribuidos" << endl;
+            cout << "  --help              Mostrar esta ayuda" << endl;
+            cout << "\nEjemplos:" << endl;
+            cout << "  " << argv[0] << "                    # Arequipa con GUI" << endl;
+            cout << "  " << argv[0] << " --data malla       # Malla 10K con GUI" << endl;
+            cout << "  " << argv[0] << " --data 3 --no-gui  # Distribución 50K sin GUI" << endl;
             return 0;
         }
     }
 
     // Cargar datos desde CSV
     cout << "\n--- Cargando datos desde CSV ---" << endl;
-    if (leerCSV("data/arequipa_puntos.csv", grafo)) {
-        cout << "✓ Datos cargados exitosamente desde arequipa_puntos.csv" << endl;
+    cout << "Archivo: " << archivoCSV << endl;
+    if (leerCSV(archivoCSV.c_str(), grafo)) {
+        cout << "✓ Datos cargados exitosamente desde " << archivoCSV << endl;
         cout << "Número de nodos cargados: " << grafo.getNumNodos() << endl;
     } else {
         cout << "⚠ No se pudieron cargar datos desde CSV, usando datos de prueba..." << endl;
